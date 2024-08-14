@@ -1,13 +1,28 @@
 import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { GridComponent } from './grid/grid.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet],
+  imports: [GridComponent],
   templateUrl: './app.component.html',
-  styleUrl: './app.component.css'
+  styleUrls: ['./app.component.css'],
 })
 export class AppComponent {
-  title = 'deadfellaz-asset-library';
+  token = '';
+
+  search(event: Event) {
+    const inputElement = event.target as HTMLInputElement;
+    let value = Number(inputElement.value);
+
+    if (value < 1) {
+      value = 1;
+    } else if (value > 10000) {
+      value = 10000;
+    }
+
+    this.token = value.toString();
+    inputElement.value = this.token;
+    console.log('Searching for token:', this.token);
+  }
 }

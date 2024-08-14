@@ -1,0 +1,7 @@
+<div class="grid-container">
+  <ng-container *ngIf="token">
+    <div class="grid-item" *ngFor="let item of gridItems; let i = index">
+      <img [src]="item" alt="Asset Image {{ i + 1 }}" />
+    </div>
+  </ng-container>
+</div>
