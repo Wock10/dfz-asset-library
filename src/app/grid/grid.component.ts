@@ -16,7 +16,7 @@ import { CommonModule } from '@angular/common';
 })
 export class GridComponent implements OnInit, OnChanges {
   @Input() token = '';
-  gridItems: string[] = Array(9).fill(''); // Array to store image paths
+  gridItems: string[] = Array();
 
   ngOnInit() {
     console.log('GridComponent initialized with token:', this.token);
@@ -34,9 +34,11 @@ export class GridComponent implements OnInit, OnChanges {
   }
 
   setGridItems() {
-    const tokenNumber = this.token; // Default to 1 if token is not a number
-    this.gridItems[0] = `assets/spritesheet/${tokenNumber}.png`; // Set the first box to the image corresponding to the token
-    this.gridItems[1] = `assets/Full/${tokenNumber}.png`; // Set the second box to the image corresponding to the token
-    this.gridItems[2] = `assets/Heads/${tokenNumber}.png`; // Set the third box to the image corresponding to the token
+    const tokenNumber = this.token;
+    this.gridItems[0] = `https://deadfellaz-asset-library.s3.amazonaws.com/og-10k/${tokenNumber}.png`;
+    this.gridItems[1] = `https://deadfellaz-asset-library.s3.amazonaws.com/fff-head/${tokenNumber}.png`;
+    this.gridItems[2] = `https://deadfellaz-asset-library.s3.amazonaws.com/fff-full/${tokenNumber}.png`;
+    this.gridItems[3] = `https://deadfellaz-asset-library.s3.amazonaws.com/pixel-spritesheet/${tokenNumber}.png`;
+    this.gridItems[4] = `https://deadfellaz-asset-library.s3.amazonaws.com/pixel-forward-walking-gif/${tokenNumber}.gif`;
   }
 }
