@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -21,34 +22,36 @@ import { CommonModule } from '@angular/common';
 export class GridComponent implements OnInit, OnChanges {
   @Input() token = '';
   @ViewChild('canvasElement') canvasElement!: ElementRef<HTMLCanvasElement>;
-  gridItems: string[] = Array(54); // Array to hold initial images and combined images
-  loadingState: boolean[] = Array(54)
-    .fill(true)
-    .map((_, index) => (index < 5 ? false : true));
-
+  gridItems: string[] = Array(48);
+  loadingState: boolean[] = Array(48).fill(true);
   jsonData: any;
+  private abortController: AbortController | null = null;
 
   constructor(private http: HttpClient) {}
 
   ngOnInit() {
-    this.loadJsonData().subscribe((data) => {
-      this.jsonData = data;
-      this.setGridItems();
-    });
+    this.loadJsonData()
+      .pipe(debounceTime(300))
+      .subscribe((data) => {
+        this.jsonData = data;
+        this.setGridItems();
+      });
+
+    this.observeImageLoading();
   }
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['token']) {
-      this.gridItems = Array(54); // Reset gridItems array
-      this.loadingState = Array(54)
-        .fill(true)
-        .map((_, index) => (index < 5 ? false : true));
+      this.abortOngoingOperations(); // Cancel any ongoing operations
+
+      this.gridItems = Array(48);
+      this.loadingState = Array(48).fill(true);
       this.setGridItems();
     }
   }
 
   loadJsonData(): Observable<any> {
-    const jsonUrl = 'bodyAndGrades.json'; // Adjust the path as needed
+    const jsonUrl = 'bodyAndGrades.json';
     return this.http.get(jsonUrl);
   }
 
@@ -62,15 +65,22 @@ export class GridComponent implements OnInit, OnChanges {
     const record = this.jsonData[tokenNumber];
 
     if (record) {
-      this.gridItems[0] = `${rootUrl}og-10k/${tokenNumber}.png`;
-      this.gridItems[1] = `${rootUrl}pixel-spritesheet/${tokenNumber}.png`;
-      this.gridItems[2] = `${rootUrl}pixel-forward-walking-gif/${tokenNumber}.gif`;
-      this.gridItems[3] = `${rootUrl}fff-head/${tokenNumber}.png`;
-      this.gridItems[4] = `${rootUrl}fff-full/${tokenNumber}.png`;
+      const initialImages = [
+        `${rootUrl}og-10k/${tokenNumber}.png`,
+        `${rootUrl}pixel-spritesheet/${tokenNumber}.png`,
+        `${rootUrl}pixel-forward-walking-gif/${tokenNumber}.gif`,
+        `${rootUrl}fff-head/${tokenNumber}.png`,
+        `${rootUrl}fff-full/${tokenNumber}.png`,
+      ];
 
-      const assetRoot = `assets/DFZDF10KPROPKIT/`;
+      initialImages.forEach((imageUrl, index) => {
+        this.gridItems[index] = imageUrl;
+        this.loadingState[index] = false;
+      });
+
+      const assetRoot = `${rootUrl}DFZDF10KPROPKIT/`;
       const bodyGrade = record.bodyGrade;
-      const body = record.body.replace(/\s+/g, '_'); // Replace spaces with underscores
+      const body = record.body.replace(/\s+/g, '_');
 
       this.loadFolderStructure().subscribe((folderStructure: string[]) => {
         const matchedFolders = this.getMatchedFolders(
@@ -118,8 +128,7 @@ export class GridComponent implements OnInit, OnChanges {
     bodyGrade: string,
     body: string
   ) {
-    const baseImageUrl = this.gridItems[4]; // fff-full image
-
+    const baseImageUrl = this.gridItems[4];
     const propSets = [
       {
         suffix: '_Dual',
@@ -181,24 +190,33 @@ export class GridComponent implements OnInit, OnChanges {
       },
     ];
 
-    let gridIndex = 5; // Start at gridItems[5]
+    let gridIndex = 5;
+    this.abortController = new AbortController(); // Initialize the AbortController
 
     for (const propSet of propSets) {
       const matchedFolder = matchedFolders[propSet.suffix];
 
       if (matchedFolder) {
         for (const prop of propSet.props) {
+          if (this.abortController.signal.aborted) {
+            console.log('Aborted loading images');
+            return; // Exit if aborted
+          }
+
           const overlayImageUrl = `${assetRoot}${matchedFolder}/${prop}`;
+
           const combinedImage = await this.createCombinedImage(
             baseImageUrl,
-            overlayImageUrl
+            overlayImageUrl,
+            this.abortController.signal // Pass the abort signal
           );
-          this.gridItems[gridIndex] = combinedImage;
-          this.loadingState[gridIndex] = false; // Set loading to false once the image is ready
-          gridIndex++;
 
-          // Add a short delay to reduce strain and show progressive loading
-          await this.delay(100); // Adjust the delay as needed
+          if (this.abortController.signal.aborted) return; // Exit if aborted
+
+          this.gridItems[gridIndex] = combinedImage;
+          this.loadingState[gridIndex] = false;
+          gridIndex++;
+          await this.delay(25);
         }
       }
     }
@@ -210,61 +228,81 @@ export class GridComponent implements OnInit, OnChanges {
 
   createCombinedImage(
     baseImageUrl: string,
-    overlayImageUrl: string
+    overlayImageUrl: string,
+    signal: AbortSignal
   ): Promise<string> {
-    const canvas = this.canvasElement.nativeElement;
+    const canvas = new OffscreenCanvas(512, 512);
     const context = canvas.getContext('2d');
 
     return Promise.all([
-      this.loadImage(baseImageUrl),
-      this.loadImage(overlayImageUrl),
+      this.loadImage(baseImageUrl, signal),
+      this.loadImage(overlayImageUrl, signal),
     ])
       .then(([baseImage, overlayImage]) => {
+        if (signal.aborted) throw new Error('Operation aborted');
+
         canvas.width = baseImage.width;
         canvas.height = baseImage.height;
         context!.drawImage(baseImage, 0, 0);
         context!.drawImage(overlayImage, 0, 0);
 
-        return canvas.toDataURL('image/png');
+        return canvas.convertToBlob({ type: 'image/png' });
+      })
+      .then((blob) => {
+        if (signal.aborted) throw new Error('Operation aborted');
+
+        return URL.createObjectURL(blob);
       })
       .catch((error) => {
-        console.error('Error loading images:', error);
+        if (signal.aborted) {
+          console.log('Operation aborted');
+        } else {
+          console.error('Error loading images:', error);
+        }
         return '';
       });
   }
 
   loadFolderStructure(): Observable<string[]> {
-    const folderStructureUrl = 'folderStructure.json'; // Adjust the path as needed
+    const folderStructureUrl = 'folderStructure.json';
     return this.http.get<string[]>(folderStructureUrl);
   }
 
-  loadImage(src: string): Promise<HTMLImageElement> {
+  loadImage(src: string, signal: AbortSignal): Promise<HTMLImageElement> {
     return new Promise((resolve, reject) => {
       const img = new Image();
-      img.crossOrigin = 'Anonymous'; // This enables CORS if supported by the server
+      img.crossOrigin = 'Anonymous';
       img.src = src;
+
+      signal.addEventListener('abort', () => {
+        img.src = ''; // Stop loading the image
+        reject(new Error('Image loading aborted'));
+      });
+
       img.onload = () => resolve(img);
       img.onerror = reject;
     });
   }
 
   observeImageLoading() {
-    const options = { root: null, rootMargin: '0px', threshold: 0.1 };
-    const observer = new IntersectionObserver((entries, obs) => {
+    const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
           const img = entry.target as HTMLImageElement;
-          const index = this.gridItems.indexOf(img.src);
-          if (index !== -1) {
-            this.loadingState[index] = false;
-          }
-          obs.unobserve(img);
+          img.src = img.getAttribute('data-src')!;
+          observer.unobserve(img);
         }
       });
-    }, options);
+    });
 
-    document.querySelectorAll('.grid-item img').forEach((img) => {
+    document.querySelectorAll('img[data-src]').forEach((img) => {
       observer.observe(img);
     });
+  }
+
+  abortOngoingOperations() {
+    if (this.abortController) {
+      this.abortController.abort(); // Abort any ongoing operations
+    }
   }
 }
