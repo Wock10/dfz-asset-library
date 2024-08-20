@@ -1,11 +1,11 @@
 const fs = require('fs');
 const path = require('path');
 
-const targetDirectory = 'C:\\Users\\twj00\\OneDrive\\Desktop\\DFZ\\DeadfellazAssetLibrary\\deadfellaz-asset-library\\src\\assets\\DFZDF10KPROPKIT';
+const targetDirectory = 'C:\\Users\\twj00\\OneDrive\\Desktop\\DFZ\\DeadfellazAssetLibrary\\deadfellaz-asset-library\\src\\assets\\DFZDF10KPROPKIT\\Fresh';
 const outputFilePath = 'folderStructure.json';
 
 function generateFolderStructure(dirPath) {
-  let structure = [];
+  const structure = {};
   const items = fs.readdirSync(dirPath);
 
   items.forEach((item) => {
@@ -13,9 +13,12 @@ function generateFolderStructure(dirPath) {
     const stats = fs.statSync(itemPath);
 
     if (stats.isDirectory()) {
-      structure.push(item);
-      const subStructure = generateFolderStructure(itemPath);
-      structure = structure.concat(subStructure.map(subItem => `${item}/${subItem}`));
+      structure[item] = generateFolderStructure(itemPath);
+    } else {
+      if (!structure['files']) {
+        structure['files'] = [];
+      }
+      structure['files'].push(item);
     }
   });
 

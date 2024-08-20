@@ -23,6 +23,5 @@ export class AppComponent {
 
     this.token = value.toString();
     inputElement.value = this.token;
-    console.log('Searching for token:', this.token);
   }
 }

@@ -1,7 +1,11 @@
 <div class="grid-container">
   <ng-container *ngIf="token">
     <div class="grid-item" *ngFor="let item of gridItems; let i = index">
-      <img [src]="item" alt="Asset Image {{ i + 1 }}" />
+      <img *ngIf="loadingState[i]" src="loading-spinner.gif" alt="Loading..." />
+      <img *ngIf="!loadingState[i]" [src]="item" loading="lazy" />
     </div>
+
+    <!-- Hidden canvas element for combining images -->
+    <canvas #canvasElement style="display: none"></canvas>
   </ng-container>
 </div>

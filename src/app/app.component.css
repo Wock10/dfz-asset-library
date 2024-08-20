@@ -1,0 +1,11 @@
+.app-container {
+  margin: 0 5vh;
+  height: 90vh;
+  overflow-y: scroll;
+  scrollbar-width: none; /* For Firefox */
+  -ms-overflow-style: none; /* For Internet Explorer and Edge */
+}
+
+.app-container::-webkit-scrollbar {
+  display: none; /* For Chrome, Safari, and Opera */
+}
