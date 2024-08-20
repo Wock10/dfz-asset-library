@@ -14,14 +14,13 @@ body {
   font-family: "Roboto Condensed", Arial, sans-serif; /* Updated font-family */
   font-size: 1rem;
   line-height: 1.5;
-  background-color: #f8f9fa;
-  color: #1a1d20;
+  color: white;
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
   padding: 1rem;
-  background-color: gray;
+  background-color: black;
 }
 
 /* Top row styling */
