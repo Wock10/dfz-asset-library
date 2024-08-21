@@ -27,6 +27,9 @@ export class GridComponent implements OnInit, OnChanges {
   jsonData: any;
   private abortController: AbortController | null = null;
 
+  // Store the loaded image in memory
+  private imageCache: { [key: string]: string } = {};
+
   constructor(private http: HttpClient) {}
 
   ngOnInit() {
@@ -55,13 +58,13 @@ export class GridComponent implements OnInit, OnChanges {
     return this.http.get(jsonUrl);
   }
 
-  setGridItems() {
+  async setGridItems() {
     if (!this.jsonData) {
       return;
     }
 
     const tokenNumber = this.token;
-    const rootUrl = 'https://deadfellaz-asset-library.s3.amazonaws.com/';
+    const rootUrl = '/api/'; // Use the proxy endpoint
     const record = this.jsonData[tokenNumber];
 
     if (record) {
@@ -73,10 +76,10 @@ export class GridComponent implements OnInit, OnChanges {
         `${rootUrl}fff-full/${tokenNumber}.png`,
       ];
 
-      initialImages.forEach((imageUrl, index) => {
-        this.gridItems[index] = imageUrl;
-        this.loadingState[index] = false;
-      });
+      for (let i = 0; i < initialImages.length; i++) {
+        this.gridItems[i] = await this.loadAndCacheImage(initialImages[i]);
+        this.loadingState[i] = false;
+      }
 
       const assetRoot = `${rootUrl}DFZDF10KPROPKIT/`;
       const bodyGrade = record.bodyGrade;
@@ -98,6 +101,25 @@ export class GridComponent implements OnInit, OnChanges {
       });
     } else {
       console.warn(`No record found for token ID ${tokenNumber}`);
+    }
+  }
+
+  async loadAndCacheImage(url: string): Promise<string> {
+    if (this.imageCache[url]) {
+      // Return the cached image if it exists
+      return this.imageCache[url];
+    }
+
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      // Cache the image in memory
+      this.imageCache[url] = objectUrl;
+      return objectUrl;
+    } catch (error) {
+      console.error('Error loading image:', error);
+      return url; // Fallback to the original URL if there's an error
     }
   }
 
@@ -202,6 +224,7 @@ export class GridComponent implements OnInit, OnChanges {
             console.log('Aborted loading images');
             return; // Exit if aborted
           }
+          await this.delay(25);
 
           const overlayImageUrl = `${assetRoot}${matchedFolder}/${prop}`;
 
@@ -216,7 +239,6 @@ export class GridComponent implements OnInit, OnChanges {
           this.gridItems[gridIndex] = combinedImage;
           this.loadingState[gridIndex] = false;
           gridIndex++;
-          await this.delay(25);
         }
       }
     }
@@ -264,7 +286,7 @@ export class GridComponent implements OnInit, OnChanges {
   }
 
   loadFolderStructure(): Observable<string[]> {
-    const folderStructureUrl = 'folderStructure.json';
+    const folderStructureUrl = '/folderStructure.json'; // Use the proxy endpoint
     return this.http.get<string[]>(folderStructureUrl);
   }
 

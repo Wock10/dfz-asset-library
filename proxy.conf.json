@@ -1,0 +1,10 @@
+{
+  "/api": {
+    "target": "https://deadfellaz-asset-library.s3.amazonaws.com",
+    "secure": true,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/api": ""
+    }
+  }
+}
