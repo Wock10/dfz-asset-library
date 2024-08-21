@@ -64,7 +64,7 @@ export class GridComponent implements OnInit, OnChanges {
     }
 
     const tokenNumber = this.token;
-    const rootUrl = '/api/'; // Use the proxy endpoint
+    const rootUrl = 'https://deadfellaz-asset-library.s3.amazonaws.com/';
     const record = this.jsonData[tokenNumber];
 
     if (record) {
@@ -224,7 +224,6 @@ export class GridComponent implements OnInit, OnChanges {
             console.log('Aborted loading images');
             return; // Exit if aborted
           }
-          await this.delay(25);
 
           const overlayImageUrl = `${assetRoot}${matchedFolder}/${prop}`;
 
@@ -239,6 +238,7 @@ export class GridComponent implements OnInit, OnChanges {
           this.gridItems[gridIndex] = combinedImage;
           this.loadingState[gridIndex] = false;
           gridIndex++;
+          await this.delay(25);
         }
       }
     }
@@ -286,7 +286,7 @@ export class GridComponent implements OnInit, OnChanges {
   }
 
   loadFolderStructure(): Observable<string[]> {
-    const folderStructureUrl = '/folderStructure.json'; // Use the proxy endpoint
+    const folderStructureUrl = 'folderStructure.json';
     return this.http.get<string[]>(folderStructureUrl);
   }
 
