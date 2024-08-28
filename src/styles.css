@@ -58,6 +58,15 @@ body {
   max-width: 900px; /* Adjust max-width to control the layout */
 }
 
+/* Grid container */
+.whole-grid-container {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 1rem;
+  width: 100%;
+  max-width: 900px; /* Adjust max-width to control the layout */
+}
+
 /* Grid items - ensuring square dimensions */
 .grid-item {
   background-color: black;
@@ -76,7 +85,7 @@ body {
 }
 
 /* Responsive grid */
-@media (max-width: 768px) {
+@media (max-width: 1000px) {
   .grid-container {
     grid-template-columns: 1fr;
   }

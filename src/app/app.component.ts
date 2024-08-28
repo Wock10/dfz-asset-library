@@ -1,10 +1,11 @@
 import { Component } from '@angular/core';
 import { GridComponent } from './grid/grid.component';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [GridComponent],
+  imports: [GridComponent, CommonModule],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css'],
 })

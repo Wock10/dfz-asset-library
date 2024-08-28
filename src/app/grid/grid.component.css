@@ -20,3 +20,7 @@
 .grid-item:hover {
   background-color: #000000de;
 }
+
+.whole-grid {
+  width: 100%;
+}

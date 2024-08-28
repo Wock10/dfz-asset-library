@@ -323,7 +323,9 @@ export class GridComponent implements OnInit, OnChanges {
   }
 
   abortOngoingOperations() {
+    console.log('Abort');
     if (this.abortController) {
+      console.log('Aborting ongoing operations');
       this.abortController.abort(); // Abort any ongoing operations
     }
   }
