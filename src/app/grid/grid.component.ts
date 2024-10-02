@@ -22,8 +22,8 @@ import { CommonModule } from '@angular/common';
 export class GridComponent implements OnInit, OnChanges {
   @Input() token = '';
   @ViewChild('canvasElement') canvasElement!: ElementRef<HTMLCanvasElement>;
-  gridItems: string[] = Array(48);
-  loadingState: boolean[] = Array(48).fill(true);
+  gridItems: string[] = Array(55); // Increased grid size to 55
+  loadingState: boolean[] = Array(55).fill(true); // Adjust loading state array size
   jsonData: any;
   private abortController: AbortController | null = null;
 
@@ -47,8 +47,8 @@ export class GridComponent implements OnInit, OnChanges {
     if (changes['token']) {
       this.abortOngoingOperations(); // Cancel any ongoing operations
 
-      this.gridItems = Array(48);
-      this.loadingState = Array(48).fill(true);
+      this.gridItems = Array(55); // Adjust grid size
+      this.loadingState = Array(55).fill(true);
       this.setGridItems();
     }
   }
@@ -99,8 +99,64 @@ export class GridComponent implements OnInit, OnChanges {
           );
         }
       });
+
+      // Add the new static Halloween images to the grid
+      await this.addHalloweenImages();
     } else {
       console.warn(`No record found for token ID ${tokenNumber}`);
+    }
+  }
+
+  async addHalloweenImages() {
+    // Define the file names for the 7 new static Halloween images
+    const halloweenImages = [
+      'halloween_2024_1.png',
+      'halloween_2024_2.png',
+      'halloween_2024_3.png',
+      'halloween_2024_4.png',
+      'halloween_2024_5.png',
+      'halloween_2024_6.png',
+      'halloween_2024_7.png',
+    ];
+
+    const baseImageUrl = this.gridItems[4]; // Use the base image from grid index 4 as the base
+
+    // Instantiate the AbortController
+    this.abortController = new AbortController();
+
+    // Check if the operation has been aborted
+    if (this.abortController.signal.aborted) {
+      console.log('Aborted before starting to load Halloween images');
+      return;
+    }
+
+    // Iterate over the Halloween images, combine them with the base, and add them to the grid
+    let gridIndex = 48; // Start placing the Halloween images after the dynamic images
+
+    for (const image of halloweenImages) {
+      // Check if the operation has been aborted before each step
+      if (this.abortController.signal.aborted) {
+        console.log('Aborted loading Halloween images');
+        return;
+      }
+
+      const overlayImageUrl = `/assets/${image}`; // Assuming images are stored in the 'assets' folder
+      const combinedImage = await this.createCombinedImage(
+        baseImageUrl,
+        overlayImageUrl,
+        this.abortController.signal
+      );
+
+      // Check again after the image is loaded to avoid further processing if aborted
+      if (this.abortController.signal.aborted) {
+        console.log('Aborted after loading Halloween image');
+        return;
+      }
+
+      this.gridItems[gridIndex] = combinedImage;
+      this.loadingState[gridIndex] = false;
+      gridIndex++;
+      await this.delay(25); // Delay to simulate load time
     }
   }
 
@@ -220,7 +276,7 @@ export class GridComponent implements OnInit, OnChanges {
 
       if (matchedFolder) {
         for (const prop of propSet.props) {
-          if (this.abortController.signal.aborted) {
+          if (this.abortController!.signal.aborted) {
             console.log('Aborted loading images');
             return; // Exit if aborted
           }
@@ -230,10 +286,10 @@ export class GridComponent implements OnInit, OnChanges {
           const combinedImage = await this.createCombinedImage(
             baseImageUrl,
             overlayImageUrl,
-            this.abortController.signal // Pass the abort signal
+            this.abortController!.signal // Pass the abort signal
           );
 
-          if (this.abortController.signal.aborted) return; // Exit if aborted
+          if (this.abortController!.signal.aborted) return; // Exit if aborted
 
           this.gridItems[gridIndex] = combinedImage;
           this.loadingState[gridIndex] = false;
