@@ -101,13 +101,13 @@ export class GridComponent implements OnInit, OnChanges {
       });
 
       // Add the new static Halloween images to the grid
-      await this.addHalloweenImages();
+      await this.addHalloweenImagesAndMustaches();
     } else {
       console.warn(`No record found for token ID ${tokenNumber}`);
     }
   }
 
-  async addHalloweenImages() {
+  async addHalloweenImagesAndMustaches() {
     // Define the file names for the 7 new static Halloween images
     const halloweenImages = [
       'halloween_2024_1.png',
@@ -117,6 +117,10 @@ export class GridComponent implements OnInit, OnChanges {
       'halloween_2024_5.png',
       'halloween_2024_6.png',
       'halloween_2024_7.png',
+      'mustache1.png',
+      'mustache2.png',
+      'mustache3.png',
+      'mustache4.png',
     ];
 
     const baseImageUrl = this.gridItems[4]; // Use the base image from grid index 4 as the base
