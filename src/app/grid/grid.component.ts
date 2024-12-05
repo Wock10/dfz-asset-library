@@ -62,11 +62,11 @@ export class GridComponent implements OnInit, OnChanges {
     if (!this.jsonData) {
       return;
     }
-
+  
     const tokenNumber = this.token;
     const rootUrl = 'https://deadfellaz-asset-library.s3.amazonaws.com/';
     const record = this.jsonData[tokenNumber];
-
+  
     if (record) {
       const initialImages = [
         `${rootUrl}og-10k/${tokenNumber}.png`,
@@ -75,22 +75,41 @@ export class GridComponent implements OnInit, OnChanges {
         `${rootUrl}fff-head/${tokenNumber}.png`,
         `${rootUrl}fff-full/${tokenNumber}.png`,
       ];
-
+  
+      // Load and cache initial images
       for (let i = 0; i < initialImages.length; i++) {
         this.gridItems[i] = await this.loadAndCacheImage(initialImages[i]);
         this.loadingState[i] = false;
       }
-
+  
       const assetRoot = `${rootUrl}DFZDF10KPROPKIT/`;
       const bodyGrade = record.bodyGrade;
       const body = record.body.replace(/\s+/g, '_');
-
+  
+      // Overlay btc_glasses.png on the base image
+      const baseImageUrl = this.gridItems[4]; // Base image is at index 4
+      const glassesOverlayUrl = `/assets/btc_glasses.png`; // Local overlay image
+  
+      try {
+        const combinedImage = await this.createCombinedImage(
+          baseImageUrl,
+          glassesOverlayUrl,
+          this.abortController?.signal || new AbortController().signal // Pass abort signal if exists
+        );
+  
+        // Add combined image to grid
+        this.gridItems[5] = combinedImage; // Add as the 6th item in the grid
+        this.loadingState[5] = false;
+      } catch (error) {
+        console.error('Error creating combined image with btc_glasses:', error);
+      }
+  
       this.loadFolderStructure().subscribe((folderStructure: string[]) => {
         const matchedFolders = this.getMatchedFolders(
           folderStructure,
           `${bodyGrade}/Fresh_${body}`
         );
-
+  
         if (matchedFolders) {
           this.setCombinedGridItems(matchedFolders, assetRoot, bodyGrade, body);
         } else {
@@ -99,13 +118,14 @@ export class GridComponent implements OnInit, OnChanges {
           );
         }
       });
-
+  
       // Add the new static Halloween images to the grid
       await this.addHalloweenImagesAndMustaches();
     } else {
       console.warn(`No record found for token ID ${tokenNumber}`);
     }
   }
+  
 
   async addHalloweenImagesAndMustaches() {
     // Define the file names for the 7 new static Halloween images
@@ -121,7 +141,6 @@ export class GridComponent implements OnInit, OnChanges {
       'mustache2.png',
       'mustache3.png',
       'mustache4.png',
-      'btc_glasses.png'
     ];
 
     const baseImageUrl = this.gridItems[4]; // Use the base image from grid index 4 as the base
@@ -273,7 +292,7 @@ export class GridComponent implements OnInit, OnChanges {
       },
     ];
 
-    let gridIndex = 5;
+    let gridIndex = 6;
     this.abortController = new AbortController(); // Initialize the AbortController
 
     for (const propSet of propSets) {
