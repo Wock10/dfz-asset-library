@@ -121,6 +121,7 @@ export class GridComponent implements OnInit, OnChanges {
       'mustache2.png',
       'mustache3.png',
       'mustache4.png',
+      'btc_glasses.png'
     ];
 
     const baseImageUrl = this.gridItems[4]; // Use the base image from grid index 4 as the base
