@@ -93,7 +93,7 @@ export class GridComponent implements OnInit, OnChanges {
   
       // Overlay btc_glasses.png on the base image
       const baseImageUrl = this.gridItems[5]; // Base image is now at index 5 (shifted by 1)
-      const glassesOverlayUrl = `/assets/btc_glasses.png`; // Local overlay image
+      const glassesOverlayUrl = `assets/btc_glasses.png`; // Local overlay image (relative path to public/assets)
   
       try {
         const combinedImage = await this.createCombinedImage(
@@ -169,7 +169,7 @@ export class GridComponent implements OnInit, OnChanges {
         return;
       }
 
-      const overlayImageUrl = `/assets/${image}`; // Assuming images are stored in the 'assets' folder
+      const overlayImageUrl = `assets/${image}`; // Assuming images are stored in the 'public/assets' folder
       const combinedImage = await this.createCombinedImage(
         baseImageUrl,
         overlayImageUrl,
