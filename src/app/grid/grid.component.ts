@@ -68,6 +68,11 @@ export class GridComponent implements OnInit, OnChanges {
     const record = this.jsonData[tokenNumber];
   
     if (record) {
+      // Load smol fellaz image first
+      const smolFellazUrl = `https://deadfellaz-asset-library.s3.us-east-1.amazonaws.com/smol_fellaz_final/${tokenNumber}.png`;
+      this.gridItems[0] = await this.loadAndCacheImage(smolFellazUrl);
+      this.loadingState[0] = false;
+
       const initialImages = [
         `${rootUrl}og-10k/${tokenNumber}.png`,
         `${rootUrl}pixel-spritesheet/${tokenNumber}.png`,
@@ -76,10 +81,10 @@ export class GridComponent implements OnInit, OnChanges {
         `${rootUrl}fff-full/${tokenNumber}.png`,
       ];
   
-      // Load and cache initial images
+      // Load and cache initial images (shifted by 1 to accommodate smol fellaz)
       for (let i = 0; i < initialImages.length; i++) {
-        this.gridItems[i] = await this.loadAndCacheImage(initialImages[i]);
-        this.loadingState[i] = false;
+        this.gridItems[i + 1] = await this.loadAndCacheImage(initialImages[i]);
+        this.loadingState[i + 1] = false;
       }
   
       const assetRoot = `${rootUrl}DFZDF10KPROPKIT/`;
@@ -87,7 +92,7 @@ export class GridComponent implements OnInit, OnChanges {
       const body = record.body.replace(/\s+/g, '_');
   
       // Overlay btc_glasses.png on the base image
-      const baseImageUrl = this.gridItems[4]; // Base image is at index 4
+      const baseImageUrl = this.gridItems[5]; // Base image is now at index 5 (shifted by 1)
       const glassesOverlayUrl = `/assets/btc_glasses.png`; // Local overlay image
   
       try {
@@ -98,8 +103,8 @@ export class GridComponent implements OnInit, OnChanges {
         );
   
         // Add combined image to grid
-        this.gridItems[5] = combinedImage; // Add as the 6th item in the grid
-        this.loadingState[5] = false;
+        this.gridItems[6] = combinedImage; // Add as the 7th item in the grid (shifted by 1)
+        this.loadingState[6] = false;
       } catch (error) {
         console.error('Error creating combined image with btc_glasses:', error);
       }
@@ -155,7 +160,7 @@ export class GridComponent implements OnInit, OnChanges {
     }
 
     // Iterate over the Halloween images, combine them with the base, and add them to the grid
-    let gridIndex = 48; // Start placing the Halloween images after the dynamic images
+    let gridIndex = 49; // Start placing the Halloween images after the dynamic images (shifted by 1)
 
     for (const image of halloweenImages) {
       // Check if the operation has been aborted before each step
@@ -292,7 +297,7 @@ export class GridComponent implements OnInit, OnChanges {
       },
     ];
 
-    let gridIndex = 6;
+    let gridIndex = 7; // Start from index 7 (shifted by 1 to accommodate smol fellaz)
     this.abortController = new AbortController(); // Initialize the AbortController
 
     for (const propSet of propSets) {
